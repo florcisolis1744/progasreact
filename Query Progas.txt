@@ -1,0 +1,389 @@
+
+-- Tabla: producto
+
+CREATE TABLE producto (
+    id_producto INTEGER PRIMARY KEY,
+    activo BOOLEAN DEFAULT TRUE,
+    averias INTEGER DEFAULT 0,
+    llenos INTEGER DEFAULT 0,
+    nombre VARCHAR(100) NOT NULL,
+    peso INTEGER UNIQUE,
+    precio_base NUMERIC(10,2),
+    ruta_imagen VARCHAR(100),
+    vacios INTEGER DEFAULT 0
+);
+
+
+-- Tabla: tipo_cliente
+
+CREATE TABLE tipo_cliente (
+    id_tipo_cliente INTEGER PRIMARY KEY,
+    tipo_cliente VARCHAR(100) NOT NULL
+);
+
+
+-- Tabla: zona
+
+CREATE TABLE zona (
+    id_zona INTEGER PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE,
+    descripcion VARCHAR(200)
+);
+
+
+-- Tabla: cliente
+
+CREATE TABLE cliente (
+    id_cliente INTEGER PRIMARY KEY,
+    activo BOOLEAN DEFAULT TRUE,
+    apellido VARCHAR(50) NOT NULL,
+    calle VARCHAR(100),
+    celular VARCHAR(20) NOT NULL,
+    cuil BIGINT,
+    fecha_nacimiento DATE,
+    id_tipo_cliente INTEGER,
+    id_zona INTEGER,
+    localidad VARCHAR(100),
+    nombre VARCHAR(50) NOT NULL,
+    numero VARCHAR(10),
+    referencia VARCHAR(150),
+    telefono_fijo VARCHAR(20),
+    ubicacion_gps VARCHAR(255),
+    CONSTRAINT fk_cliente_tipo_cliente FOREIGN KEY (id_tipo_cliente) REFERENCES tipo_cliente(id_tipo_cliente),
+    CONSTRAINT cliente_id_zona_fkey FOREIGN KEY (id_zona) REFERENCES zona(id_zona)
+);
+
+
+-- Tabla: estado
+
+CREATE TABLE estado (
+    id_estado INTEGER PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE
+);
+
+
+-- Tabla: tipo_pedido
+
+CREATE TABLE tipo_pedido (
+    id_tipo_pedido INTEGER PRIMARY KEY,
+    tipo_pedido VARCHAR(75) NOT NULL
+);
+
+
+
+-- Tabla: metodo_pago
+
+CREATE TABLE metodo_pago (
+    id_metodo INTEGER PRIMARY KEY,
+    metodo VARCHAR(75)
+);
+
+
+-- Tabla: usuario
+
+CREATE TABLE usuario (
+    id_usuario INTEGER PRIMARY KEY,
+    activo BOOLEAN DEFAULT TRUE,
+    apellido VARCHAR(25),
+    correo VARCHAR(100) NOT NULL UNIQUE,
+    dni VARCHAR(50) NOT NULL UNIQUE,
+    id_rol INTEGER NOT NULL,
+    imagen VARCHAR(255),
+    nombre VARCHAR(25),
+    password_hash VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20) NOT NULL UNIQUE
+);
+
+
+
+-- Tabla: pedido
+
+CREATE TABLE pedido (
+    id_pedido INTEGER PRIMARY KEY,
+    codigo VARCHAR(20) NOT NULL UNIQUE,
+    fecha DATE,
+    id_cliente INTEGER NOT NULL,
+    id_estado INTEGER NOT NULL,
+    id_recepcionista INTEGER NOT NULL,
+    id_repartidor INTEGER,
+    id_tipo_pedido INTEGER NOT NULL,
+    id_metodo INTEGER,
+    CONSTRAINT pedido_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    CONSTRAINT pedido_id_estado_fkey FOREIGN KEY (id_estado) REFERENCES estado(id_estado),
+    CONSTRAINT pedido_id_recepcionista_fkey FOREIGN KEY (id_recepcionista) REFERENCES usuario(id_usuario),
+    CONSTRAINT pedido_id_repartidor_fkey FOREIGN KEY (id_repartidor) REFERENCES usuario(id_usuario),
+    CONSTRAINT pedido_id_tipo_pedido_fkey FOREIGN KEY (id_tipo_pedido) REFERENCES tipo_pedido(id_tipo_pedido),
+    CONSTRAINT pedido_id_metodo_pago_fkey FOREIGN KEY (id_metodo) REFERENCES metodo_pago(id_metodo)
+);
+
+
+
+-- Tabla: pedido_producto
+
+CREATE TABLE pedido_producto (
+    id INTEGER PRIMARY KEY,
+    cantidad INTEGER,
+    id_pedido INTEGER NOT NULL,
+    id_producto INTEGER NOT NULL,
+    precio_lista NUMERIC,
+    CONSTRAINT pedido_producto_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido),
+    CONSTRAINT pedido_producto_id_producto_fkey FOREIGN KEY (id_producto) REFERENCES producto(id_producto)
+);
+
+
+
+-- Tabla: prestamo_envase
+
+CREATE TABLE prestamo_envase (
+    id_prestamo INTEGER PRIMARY KEY,
+    fecha_devolucion DATE,
+    fecha_prestamo DATE,
+    id_cliente INTEGER NOT NULL,
+    id_pedido INTEGER NOT NULL,
+    num_comodato INTEGER,
+    CONSTRAINT prestamo_envase_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    CONSTRAINT prestamo_envase_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido)
+);
+
+
+-- Tabla: proveedor
+
+CREATE TABLE proveedor (
+    id_proveedor INTEGER PRIMARY KEY,
+    contacto VARCHAR(100),
+    correo VARCHAR(100),
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20)
+);
+
+
+-- Tabla: ingreso_producto
+
+CREATE TABLE ingreso_producto (
+    id_ingreso INTEGER PRIMARY KEY,
+    fecha_ingreso TIMESTAMP,
+    fecha_pagado TIMESTAMP,
+    id_carta_porte INTEGER NOT NULL,
+    id_proveedor INTEGER NOT NULL,
+    monto NUMERIC,
+    pagado BOOLEAN,
+    CONSTRAINT ingreso_producto_id_carta_porte_fkey FOREIGN KEY (id_carta_porte) REFERENCES carta_porte(id_carta),
+    CONSTRAINT ingreso_producto_id_proveedor_fkey FOREIGN KEY (id_proveedor) REFERENCES proveedor(id_proveedor)
+);
+
+
+
+-- Tabla: carta_porte
+
+CREATE TABLE carta_porte (
+    id_carta INTEGER PRIMARY KEY,
+    descripcion VARCHAR(200),
+    fecha DATE,
+    activo BOOLEAN,
+    id_encargado INTEGER NOT NULL,
+    id_repartidor INTEGER NOT NULL,
+    id_vehiculo INTEGER NOT NULL,
+    numeracion VARCHAR(50),
+    CONSTRAINT carta_porte_id_encargado_fkey FOREIGN KEY (id_encargado) REFERENCES usuario(id_usuario),
+    CONSTRAINT carta_porte_id_repartidor_fkey FOREIGN KEY (id_repartidor) REFERENCES usuario(id_usuario),
+    CONSTRAINT carta_porte_id_vehiculo_fkey FOREIGN KEY (id_vehiculo) REFERENCES vehiculo(id_vehiculo)
+);
+
+
+
+-- Tabla: carta_producto
+
+CREATE TABLE carta_producto (
+    id_producto INTEGER,
+    id_carta INTEGER,
+    id_tipo INTEGER,
+    averias INTEGER,
+    hora TIMESTAMP,
+    llenos INTEGER,
+    vacios INTEGER,
+    PRIMARY KEY (id_producto, id_carta, id_tipo),
+    CONSTRAINT carta_producto_id_producto_fkey FOREIGN KEY (id_producto) REFERENCES producto(id_producto),
+    CONSTRAINT carta_producto_id_carta_fkey FOREIGN KEY (id_carta) REFERENCES carta_porte(id_carta),
+    CONSTRAINT carta_producto_id_tipo_fkey FOREIGN KEY (id_tipo) REFERENCES tipo_carga(id_tipo)
+);
+
+
+-- Tabla: venta_envase
+CREATE TABLE venta_envase (
+    id_venta_envase INTEGER PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    id_pedido INTEGER NOT NULL,
+    id_usuario_autoriza INTEGER NOT NULL,
+    CONSTRAINT venta_envase_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    CONSTRAINT venta_envase_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido),
+    CONSTRAINT venta_envase_id_usuario_autoriza_fkey FOREIGN KEY (id_usuario_autoriza) REFERENCES usuario(id_usuario)
+);
+
+-- Tabla: falta_rendicion
+CREATE TABLE falta_rendicion (
+    id_falta_rendicion INTEGER PRIMARY KEY,
+    comentario TEXT,
+    id_rendicion INTEGER NOT NULL,
+    id_repartidor INTEGER NOT NULL,
+    id_tipo_falta INTEGER NOT NULL,
+    monto NUMERIC,
+    CONSTRAINT falta_rendicion_id_rendicion_fkey FOREIGN KEY (id_rendicion) REFERENCES rendicion_diaria(id_rendicion),
+    CONSTRAINT falta_rendicion_id_repartidor_fkey FOREIGN KEY (id_repartidor) REFERENCES usuario(id_usuario),
+    CONSTRAINT falta_rendicion_id_tipo_falta_fkey FOREIGN KEY (id_tipo_falta) REFERENCES tipo_falta(id_tipo_falta)
+);
+
+-- Tabla: fcmdispositivo
+CREATE TABLE fcmdispositivo (
+    id INTEGER PRIMARY KEY,
+    fecharegistro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_repartidor INTEGER,
+    token TEXT NOT NULL,
+    CONSTRAINT fk_fcmdispositivo_usuario FOREIGN KEY (id_repartidor) REFERENCES usuario(id_usuario)
+);
+
+-- Tabla: gasto_repartidor
+CREATE TABLE gasto_repartidor (
+    id_gasto INTEGER PRIMARY KEY,
+    fecha DATE,
+    id_repartidor INTEGER NOT NULL,
+    monto NUMERIC,
+    motivo VARCHAR(255) NOT NULL,
+    valido BOOLEAN,
+    CONSTRAINT gasto_repartidor_id_repartidor_fkey FOREIGN KEY (id_repartidor) REFERENCES usuario(id_usuario)
+);
+
+-- Tabla: ticket
+CREATE TABLE ticket (
+    id_ticket INTEGER PRIMARY KEY,
+    descuento NUMERIC(5,2),
+    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_pedido INTEGER NOT NULL,
+    medio_pago VARCHAR(20),
+    total NUMERIC(10,2),
+    CONSTRAINT ticket_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido)
+);
+
+-- Tabla: ticket_detalle
+CREATE TABLE ticket_detalle (
+    id_detalle INTEGER PRIMARY KEY,
+    cantidad INTEGER,
+    id_producto INTEGER NOT NULL,
+    id_ticket INTEGER NOT NULL,
+    precio_unitario NUMERIC(10,2),
+    CONSTRAINT ticket_detalle_id_producto_fkey FOREIGN KEY (id_producto) REFERENCES producto(id_producto),
+    CONSTRAINT ticket_detalle_id_ticket_fkey FOREIGN KEY (id_ticket) REFERENCES ticket(id_ticket)
+);
+
+-- Tabla: rol
+CREATE TABLE rol (
+    id_rol INTEGER PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Tabla: rendicion_diaria
+CREATE TABLE rendicion_diaria (
+    id_rendicion INTEGER PRIMARY KEY,
+    fecha DATE,
+    id_encargado INTEGER NOT NULL,
+    id_repartidor INTEGER NOT NULL,
+    monto_faltante NUMERIC,
+    monto_rendido NUMERIC,
+    monto_total NUMERIC,
+    CONSTRAINT rendicion_diaria_id_encargado_fkey FOREIGN KEY (id_encargado) REFERENCES usuario(id_usuario),
+    CONSTRAINT rendicion_diaria_id_repartidor_fkey FOREIGN KEY (id_repartidor) REFERENCES usuario(id_usuario)
+);
+
+-- Tabla: reasignacion
+CREATE TABLE reasignacion (
+    id_reasignacion INTEGER PRIMARY KEY,
+    fecha_evento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_asignador INTEGER NOT NULL,
+    id_pedido INTEGER NOT NULL,
+    motivo TEXT NOT NULL,
+    CONSTRAINT reasignacion_id_repartidor_fkey FOREIGN KEY (id_asignador) REFERENCES usuario(id_usuario),
+    CONSTRAINT reasignacion_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido)
+);
+
+
+-- Tabla: movimientos_pedido
+CREATE TABLE movimientos_pedido (
+    id_movimiento INTEGER PRIMARY KEY,
+    estado_anterior INTEGER NOT NULL,
+    estado_nuevo INTEGER NOT NULL,
+    fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id_pedido INTEGER NOT NULL,
+    CONSTRAINT movimientos_pedido_estado_anterior_fkey FOREIGN KEY (estado_anterior) REFERENCES estado(id_estado),
+    CONSTRAINT movimientos_pedido_estado_nuevo_fkey FOREIGN KEY (estado_nuevo) REFERENCES estado(id_estado),
+    CONSTRAINT movimientos_pedido_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido)
+);
+
+-- Tabla: pago_cliente
+CREATE TABLE pago_cliente (
+    id_pago INTEGER PRIMARY KEY,
+    fecha DATE,
+    id_cliente INTEGER NOT NULL,
+    id_deuda INTEGER NOT NULL,
+    id_usuario INTEGER NOT NULL,
+    metodo_pago VARCHAR(75) NOT NULL,
+    monto_pagado NUMERIC,
+    CONSTRAINT pago_cliente_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    CONSTRAINT pago_cliente_id_deuda_fkey FOREIGN KEY (id_deuda) REFERENCES deuda_pedido(id_deuda),
+    CONSTRAINT pago_cliente_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+-- Tabla: comprobante
+CREATE TABLE comprobante (
+    id_comprobante INTEGER PRIMARY KEY,
+    archivo VARCHAR(255),
+    banco VARCHAR(100),
+    codigo_comprobante VARCHAR(75),
+    id_pago INTEGER,
+    nro_transaccion VARCHAR(50),
+    CONSTRAINT comprobante_id_pago_fkey FOREIGN KEY (id_pago) REFERENCES pago_cliente(id_pago)
+);
+
+-- Tabla: deuda_pedido
+CREATE TABLE deuda_pedido (
+    id_deuda INTEGER PRIMARY KEY,
+    fecha_registro DATE,
+    fecha_saldada DATE,
+    id_cliente INTEGER NOT NULL,
+    id_pedido INTEGER NOT NULL,
+    monto NUMERIC,
+    monto_restante NUMERIC,
+    CONSTRAINT deuda_pedido_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    CONSTRAINT deuda_pedido_id_pedido_fkey FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido)
+);
+
+-- Tabla: lista_precio
+CREATE TABLE lista_precio (
+    id_lista INTEGER PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL
+);
+
+-- Tabla: lista_precio_producto
+CREATE TABLE lista_precio_producto (
+    id_lista INTEGER NOT NULL,
+    id_producto INTEGER NOT NULL,
+    precio NUMERIC,
+    PRIMARY KEY (id_lista, id_producto),
+    CONSTRAINT lista_precio_producto_id_lista_fkey FOREIGN KEY (id_lista) REFERENCES lista_precio(id_lista),
+    CONSTRAINT lista_precio_producto_id_producto_fkey FOREIGN KEY (id_producto) REFERENCES producto(id_producto)
+);
+
+-- Vista: vista_stock_actual_repartidor
+CREATE VIEW vista_stock_actual_repartidor AS
+SELECT
+    r.id_repartidor,
+    r.nombre,
+    r.apellido,
+    p.id_producto,
+    p.nombre AS nombre_producto,
+    p.imagen,
+    s.stock_actual
+FROM
+    stock_repartidor s
+JOIN
+    producto p ON p.id_producto = s.id_producto
+JOIN
+    usuario r ON r.id_usuario = s.id_repartidor;
